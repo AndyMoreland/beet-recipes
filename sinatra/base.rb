@@ -1,9 +1,20 @@
-project = ask "Project name?"
-run 'mkdir views'
-run 'mkdir models'
-run 'mkdir tmp'
-run 'mkdir public'
-file "config.ru" do
+project = ask "Project name? "
+if ARGV.size < 2
+  dir = ask "Directory? "
+else
+  dir = ARGV[-1]
+end
+default_domain = "#{project}.andymo.org"
+domain = ask "Domain? [#{default_domain}] "
+domain = domain.empty? ? default_domain : domain
+
+run "mkdir #{dir}"
+run "mkdir #{dir}/views"
+run "mkdir #{dir}/models"
+run "mkdir #{dir}/tmp"
+run "mkdir #{dir}/public"
+
+file "#{dir}/config.ru" do
   %{
 require '#{project}'
 
@@ -20,7 +31,7 @@ run Sinatra::Application
   }
 end
 
-file "#{project}.rb" do
+file "#{dir}/#{project}.rb" do
  %{
 require 'rubygems'
 require 'sinatra'
@@ -28,5 +39,17 @@ require 'sinatra'
 get '/'
   'Hello, world'
 end
+ }.strip
+end
+
+
+file "#{dir}/#{project}.vhost.conf" do
+ %{
+server{
+  listen 80;
+  server_name #{domain} *.#{domain}
+  root /var/www/#{dir}/public
+  passenger_enabled on;
+}
  }.strip
 end
